@@ -1,0 +1,42 @@
+# Skript for giving mob spawners
+# Author: YourName (or AI)
+# Version: 1.0
+#
+# Command: /spawner <mobType>
+# Permission: skript.spawner.use
+# Description: Gives the player a spawner item for the specified mob type.
+
+command /spawner <entity type>:
+    permission: skript.spawner.use
+    permission message: &cYou do not have permission to use this command.
+    usage: &cUsage: /spawner <mobType> (e.g., /spawner zombie)
+    trigger:
+        # Check if the argument provided is a valid entity type
+        # Skript's <entity type> argument type handles basic validation
+
+        # Get the official Minecraft namespaced ID for the entity type
+        # Example: If arg-1 is ZOMBIE, this becomes "minecraft:zombie"
+        set {_mobID} to type id of arg-1
+
+        # Check if {_mobID} is actually set (it might not be for invalid inputs Skript somehow allowed)
+        if {_mobID} is not set:
+            send "&cInvalid mob type specified."
+            stop
+
+        # Construct the NBT data for the spawner item
+        # We need BlockEntityTag to make the item store the spawner data
+        # Note the double quotes "" around the ID variable inside the NBT string
+        set {_nbt} to "{BlockEntityTag:{SpawnData:{entity:{id:""%{_mobID}%""}}}}"
+
+        # Give the spawner item to the player who executed the command
+        # '1' is the amount, 'spawner' is the item type
+        give 1 spawner with nbt {_nbt} to player
+
+        # Send a confirmation message to the player
+        # %arg-1% will display the name of the entity type (e.g., ZOMBIE)
+        send "&aSuccessfully gave you 1 %arg-1% spawner!"
+
+# Optional: Alias /mobspawner to /spawner
+# command /mobspawner <entity type>:
+#    trigger:
+#        execute command "/spawner %arg-1%" # Pass the command along

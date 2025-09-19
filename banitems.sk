@@ -1,0 +1,27 @@
+command /banstick:
+    permission: banstick.give
+    permission message: &cYou don't have permission to use this command!
+    trigger:
+        give player a golden shovel named "&cBan Stick" with lore "&7Hit a player to ban them for 7 days!"
+
+on damage of player:
+    attacker is a player
+    weapon of attacker is a golden shovel named "&cBan Stick"
+    cancel event
+    ban and kick victim by reason of "Banned Via Ban Stick" for 7 days
+    broadcast "&4&l%victim's name%&r &6was banned for 7 days by the &6Ban Stick&7!"
+
+
+
+command /bantorch:
+    permission: banstick.cosmic.give
+    permission message: &cYou don't have permission to use this command!
+    trigger:
+        give player a soul torch named "&c&lErasure" with lore "&6&kLikeCosmic's Weapon"
+
+on damage of player:
+    attacker is a player
+    weapon of attacker is a soul torch named "&c&lErasure"
+    cancel event
+    ban and kick victim by reason of "&6A &5Cosmic &6Being has erased YOU! from existance" for 7 days
+    broadcast "&6A &1Cosmic &6Being has erased &c%victim's name% &6from existance"

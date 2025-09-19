@@ -1,0 +1,131 @@
+# Spawn custom mobs randomly near players
+every 60 seconds:
+    loop all players:
+        if chance of 50%:
+            set {_spawnLoc} to location of loop-player
+            add random integer between -25 and 25 to x-coordinate of {_spawnLoc}
+            add random integer between -25 and 25 to z-coordinate of {_spawnLoc}
+            add 3 to y-coordinate of {_spawnLoc}
+
+            set {_mobTypes::1} to "zombie1"
+            set {_mobTypes::2} to "1skeleton"
+            set {_mobTypes::3} to "1spider"
+            set {_mobTypes::4} to "1creeper"
+            set {_chosen} to random element out of {_mobTypes::*}
+            spawn {_chosen} at {_spawnLoc}
+            set {_mob} to last spawned entity
+
+            if {_chosen} is "zombie1":
+                set name of {_mob} to "§6Advanced Zombie"
+                set max health of {_mob} to 12
+                set health of {_mob} to 12
+                apply strength 1 to {_mob} for 99999 seconds
+
+            else if {_chosen} is "1skeleton":
+                set name of {_mob} to "§cAdvanced Skeleton"
+
+                set max health of {_mob} to 12
+                set health of {_mob} to 12
+                apply speed 2 to {_mob} for 99999 seconds
+                apply glowing to {_mob} for 99999 seconds
+
+            else if {_chosen} is "1spider":
+                set name of {_mob} to "§6Advanced Spider"
+
+                set max health of {_mob} to 12
+                set health of {_mob} to 12
+                apply jump boost 2 to {_mob} for 99999 seconds
+                apply poison to {_mob} for 10 seconds
+
+            else if {_chosen} is "1creeper":
+                set name of {_mob} to "§cAdvanced Creeper"
+
+                set max health of {_mob} to 12
+                set health of {_mob} to 12
+                apply speed 3 to {_mob} for 30 seconds
+
+# Custom loot for each mob
+on death of zombie:
+    if name of victim is "§6Advanced Zombie":
+        clear drops
+        drop iron sword named "§7Advanced Blade" at location of victim
+        set {_amount} to random integer between 2 and 5
+        loop {_amount} times:
+            drop rotten flesh at location of victim
+        if chance of 2%:
+            drop diamond at location of victim
+
+on death of skeleton:
+    if name of victim is "§cAdvanced Skeleton":
+        clear drops
+        drop bow named "§cRecky Bow" with lore "&7&kbow" at location of victim
+        loop 5 times:
+            drop arrow at location of victim
+        if chance of 2%:
+            drop enchanted golden apple at location of victim
+
+on death of spider:
+    if name of victim is "§6Advanced Spider":
+        clear drops
+        loop 3 times:
+            drop string at location of victim
+        drop water bottle named "§dVenom Vial" at location of victim
+        if chance of 20%:
+            drop cobweb at location of victim
+
+on death of creeper:
+    if name of victim is "§cAdvanced Creeper":
+        clear drops
+        drop tnt at location of victim
+        set {_amount} to random integer between 3 and 6
+        loop {_amount} times:
+            drop gunpowder at location of victim
+        if chance of 15%:
+            drop fire charge at location of victim
+
+
+command /forcesummon <text>:
+    permission: mobpack.forcesummon
+    permission message: You don't have permission to use this command.
+    trigger:
+        # Set the location to the player's current location
+        set {_loc} to location of player
+
+        # Summon the chosen mob at the specified location
+        if arg-1 is "1zombie":
+            spawn zombie at {_loc}
+            set name of last spawned entity to "§6Advanced Zombie"
+
+            set max health of last spawned entity to 12
+            set health of last spawned entity to 12
+            apply strength 1 to last spawned entity for 99999 seconds
+
+        else if arg-1 is "1skeleton":
+            spawn skeleton at {_loc}
+            set name of last spawned entity to "§cAdvanced Skeleton"
+
+            set max health of last spawned entity to 12
+            set health of last spawned entity to 12
+            apply speed 2 to last spawned entity for 99999 seconds
+            apply glowing to last spawned entity for 99999 seconds
+
+        else if arg-1 is "1spider":
+            spawn spider at {_loc}
+            set name of last spawned entity to "§6Advanced Spider"
+
+            set max health of last spawned entity to 12
+            set health of last spawned entity to 12
+            apply jump boost 2 to last spawned entity for 99999 seconds
+            apply poison to last spawned entity for 10 seconds
+
+        else if arg-1 is "1creeper":
+            spawn creeper at {_loc}
+            set name of last spawned entity to "§cAdvanced Creeper"
+
+            set max health of last spawned entity to 12
+            set health of last spawned entity to 12
+            apply speed 2 to last spawned entity for 20 seconds
+
+        else:
+            send "&cUnknown mob type! Please use one of the following: zombie1, skeleton, spider, creeper." to player
+

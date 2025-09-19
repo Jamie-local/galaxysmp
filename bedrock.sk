@@ -1,0 +1,44 @@
+command /nv:
+
+    permission message: &cYou don't have permission to use this command.
+    trigger:
+        if {nv.%player%} is not set:
+            apply night vision to player for 9999999 seconds
+            set {nv.%player%} to true
+            send "&aNight vision enabled!" to player
+        else:
+            remove night vision from player
+            delete {nv.%player%}
+            send "&cNight vision disabled!" to player
+
+options:
+	messages: true #set to false if you don't want a message to send when command is executed
+
+command offhand:
+	trigger:
+		if player's offhand tool is air:
+			if player's tool is air:
+				if {@messages} is true:
+					send "&cPlease hold something!" to player
+			else:
+				set player's offhand tool to player's tool
+				clear player's tool
+				if {@messages} is true:
+					send "&aSuccessfully set your offhand to &e%player's offhand tool%&a!" to player
+		else:
+			if player's tool is air:
+				set {offhand::%player's uuid%} to player's offhand tool
+				set player's offhand tool to player's tool
+				set player's tool to {offhand::%player's uuid%}
+				if {@messages} is true:
+					send "&aSuccessfully removed &e%{offhand::%player's uuid%}% &afrom your offhand!" to player
+				delete {offhand::%player's uuid%}
+			else:
+				set {offhand::%player's uuid%} to player's offhand tool
+				if {@messages} is true:
+					send "&aSuccessfully replaced &e%{offhand::%player's uuid%}% &awith &e%player's tool%&a!" to player
+				set player's offhand tool to player's tool
+				set player's tool to {offhand::%player's uuid%}
+				delete {offhand::%player's uuid%}
+
+

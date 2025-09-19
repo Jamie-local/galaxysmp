@@ -1,0 +1,52 @@
+command /freeze <player>:
+    permission: op # Or set a specific permission like "server.freeze"
+    permission message: "&cYou do not have permission to use this command."
+    trigger:
+        # Check if the target player is online
+        if arg-1 is online:
+            # Set the target player's walk speed to 0 (frozen)
+            set walk speed of arg-1 to 0
+
+            # Disable jumping by applying a strong negative Jump Boost effect
+            apply potion of jump boost of tier 128 to arg-1 for 999 days # Effectively disables jumping
+
+            # Send the warning messages
+            # Using color codes and formatting to make it stand out
+            send "&c&l&m-----------------------------------------" to arg-1
+            send "&c&l█████████" to arg-1
+            send "&c&l█ WARNING █" to arg-1
+            send "&c&l█████████" to arg-1
+            send "" to arg-1 # Empty line for spacing
+            send "&cYou have been frozen by staff." to arg-1
+            send "&6Join &b&ndsc.gg/galaxysmpp&r &6For Screen Share." to arg-1
+            send "&c&lDO NOT LOG OUT OR YOU WILL BE BANNED." to arg-1
+            send "" to arg-1 # Empty line for spacing
+            send "&c&l&m-----------------------------------------" to arg-1
+
+            # Send confirmation to the command sender
+            send "&aSuccessfully froze %arg-1% (movement and jump disabled)." to player
+        else:
+            # Player not found message
+            send "&cPlayer '%arg-1%' not found or is not online." to player
+
+# Command to unfreeze a player
+command /unfreeze <player>:
+    permission: op # Or set a specific permission like "server.unfreeze"
+    permission message: "&cYou do not have permission to use this command."
+    trigger:
+        # Check if the target player is online
+        if arg-1 is online:
+            # Reset the target player's walk speed to default (0.2)
+            set walk speed of arg-1 to 0.2
+
+            # WORKAROUND: Remove only the jump boost effect specifically
+            # This is used because 'clear potion effects' was causing errors.
+            # Limitation: This won't remove other potion effects the player might have.
+            remove jump boost from arg-1
+
+            # Send confirmation messages
+            send "&aYou have been unfrozen by staff." to arg-1
+            send "&aSuccessfully unfroze %arg-1%." to player
+        else:
+            # Player not found message
+            send "&cPlayer '%arg-1%' not found or is not online." to player

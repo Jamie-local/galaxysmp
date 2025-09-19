@@ -1,0 +1,30 @@
+command /start:
+  trigger:
+    # Send a welcoming title
+    send "" to player # Blank line for spacing
+    send "&e&lWelcome to GalaxySMP!" to player
+    send "&7Here's a quick rundown of some cool features:" to player
+    send "" to player # Blank line for spacing
+
+    # List the server features
+    send "&a▶ &fAuction House: &7Buy and sell items with other players!" to player
+    send "&b▶ &fCustom Weapons: &7Discover unique and powerful gear." to player
+    send "&c▶ &fCustom Mobs: &7Encounter challenging new creatures." to player
+    send "&d▶ &fVote Crates: &7Get rewarded for supporting the server." to player
+    send "&6▶ &fRanks: &7Climb the ranks for perks and prestige." to player
+    send "&e▶ &fCrates: &7Test your luck for awesome prizes." to player
+    send "&9▶ &fOP Enchants: &7Obtain god-tier enchantments." to player
+    send "&5▶ &fCustom Items: &7Explore a wide variety of unique items." to player
+    send "" to player # Blank line for spacing
+
+    # Mention future updates
+    send "&7&o...and much more planned for future updates!" to player
+    send "" to player # Blank line for spacing
+
+    # Bedrock specific commands
+    send "&3&lBedrock Players:&r &fDon't forget you can use:" to player
+    send "&b - /nv &7(Toggle Night Vision)" to player
+    send "&b - /offhand &7(Manage your offhand slot)" to player
+    send "" to player # Blank line for spacing
+
+    send "&aEnjoy your time on GalaxySMP!" to player

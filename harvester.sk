@@ -1,0 +1,120 @@
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+#      Custom Boss Drop Skript     #
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+
+options:
+    # --- Boss Configuration ---
+    boss_entity_type: ZOMBIE   # Entity type (e.g., ZOMBIE, SKELETON, WITHER, ENDER_DRAGON)
+                               # Find IDs here: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/entity/EntityType.html
+    boss_custom_name: "&2The Harvester"
+
+    # --- Weapon Configuration ---
+    drop_chance_percent: 100     # Chance (out of 100) for the weapon to drop. Set to 100 for guaranteed.
+    weapon_item_type: DIAMOND_HOE # Item type (e.g., DIAMOND_SWORD, NETHERITE_AXE, BOW)
+                                   # Find IDs here: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Material.html
+    weapon_custom_name: "&6Infernal Harvester" # Custom name for the dropped weapon
+    # Define multiple lore lines using different option names
+    weapon_lore_1: "&cFiery Power"
+  
+
+    # --- Misc Configuration ---
+    clear_default_drops: true   # Set to true to remove normal drops (e.g., rotten flesh), false to keep them.
+    broadcast_on_death: true   # Set to true to announce the boss's death
+
+# ---------------------------------- #
+#          Death Event Handler       #
+# ---------------------------------- #
+
+on death of {@boss_entity_type}: # Trigger when the specified entity type dies
+    # 1. Check if the victim IS the boss (by custom name)
+    if name of victim is "&2The Harvester":
+
+        # 2. Check if the killer was a player
+        if attacker is a player:
+
+            # 3. Check drop chance
+            if chance of {@drop_chance_percent}%:
+
+                # 4. Optional: Clear default drops
+                if {@clear_default_drops} is true:
+                    clear drops
+
+                # 5. Create the custom weapon
+                #    We build the lore string carefully, only adding lines that are set in options
+                delete {_lore_string::*}
+                
+                add "&cFiery Power" to {_lore_string::*}
+
+                set {_custom_weapon} to {@weapon_item_type} named "%{@weapon_custom_name}%"
+                set lore of {_custom_weapon} to {_lore_string::*}
+                # 6. Add the custom weapon to the event drops
+                add {_custom_weapon} to drops
+
+                # Replace line 65 with this:
+                broadcast "&c☠ %{@boss_custom_name}%&c has been slain by the valiant &a%name of attacker%&c! ☠"
+
+        # Else (optional): Handle case where killer is not a player (e.g., died to lava/fall)
+        # else:
+            # You could clear drops here too if you don't want non-player kills to drop anything
+            # clear drops
+            # broadcast "%name of victim% died to the environment."
+
+# --- Helper Command to Spawn the Boss (Example) ---
+# You NEED a way to spawn your boss WITH the custom name for the death event to work.
+# This is a basic example; you might use MythicMobs, Essentials, or another Skript.
+
+command /bossharvester:
+    permission: developer.harvester
+    trigger:
+        if {@boss_custom_name} is not set:
+            send "&cBoss name is not configured in Skript options!"
+            stop
+        
+        spawn 1 {@boss_entity_type} at player's location
+        set name of last spawned entity to "&2The Harvester"
+        set max health of last spawned entity to 55
+        heal last spawned entity by 55
+        # Optional: Apply potion effects, equipment, attributes etc.
+        apply potion of strength 3 to last spawned entity for 999 days
+        equip last spawned entity with diamond helmet
+        equip last spawned entity with diamond chestplate
+        equip last spawned entity with diamond leggings
+        equip last spawned entity with diamond boots
+        equip last spawned entity with diamond sword
+        set {_boss} to last spawned entity
+        wait 20 seconds
+        broadcast "&6The Harvester Is Summoning His Minions!"
+
+        if {_boss} is alive:
+            # Get the boss's current location (it might have moved)
+            set {_boss_loc} to location of {_boss}
+
+            # Optional: Send a message to nearby players
+            # Might need Skript-Extras or another addon for 'players within X meters'
+            # Alternatively, just announce it broadly or skip the arrival message.
+            broadcast "&cReinforcements have arrived for %name of {_boss}%!"
+
+
+
+            # Loop 5 times to spawn 5 minions
+            loop 5 times:
+                # Spawn a zombie at the boss's current location
+                # You could add a small offset so they don't spawn inside each other:
+                # spawn zombie at location randomly offset horizontally from {_boss_loc} by 1 # Example offset
+                spawn zombie at {_boss_loc}
+                set {_minion} to last spawned entity # Store the minion entity
+
+                # Equip the minion
+                equip {_minion} with leather helmet
+                equip {_minion} with leather chestplate
+                equip {_minion} with leather leggings
+                equip {_minion} with leather boots
+                equip {_minion} with stone axe # Equips item in main hand
+
+                # Optional: Give the minions a name / adjust health
+                set name of {_minion} to "&eZombie Minion"
+                set max health of {_minion} to 15
+                set health of {_minion} to max health of {_minion}
+        
+        
+        send "&aSpawned %{@boss_custom_name}%&a at your location."

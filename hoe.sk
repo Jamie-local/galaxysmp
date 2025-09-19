@@ -1,0 +1,90 @@
+# Skript for the Infernal Harvester Hoe
+# Abilities: Right-click to shoot fireball, auto-pickup drops on kill.
+# Version 2: Fixed syntax errors based on user feedback
+
+options:
+    # --- Configuration ---
+    # The specific type of hoe this script applies to
+    hoe_type: diamond hoe
+
+    # The required name (Use & for color codes)
+    hoe_name: "&6Infernal Harvester"
+    # A unique part of the lore to identify the item (Use & for color codes)
+    hoe_lore_check: "&cFiery Power"
+
+    # Fireball settings
+    fireball_speed: 1.5  # Adjust speed as desired
+    fireball_cooldown: 1 seconds # Cooldown between shots (e.g., 0.5 seconds, 1 second)
+
+# --- Helper Function to Check Item ---
+# Reusable check to see if an item is the custom hoe
+function isInfernalHarvester(item: item) :: boolean:
+    # Check item type
+    if type of {_item} is not {@hoe_type}:
+        return false
+    # Check item name (uncolored comparison is often safer)
+    # FIX: Removed explicit quotes around {@hoe_name}
+    if uncolored name of {_item} is not uncolored {@hoe_name}:
+        return false
+    # Check item lore
+    loop lore of {_item}:
+        # FIX: Removed explicit quotes around {@hoe_lore_check}
+        if loop-value contains {@hoe_lore_check}:
+            return true # Found the matching lore line
+    # If lore doesn't match after checking all lines
+    return false
+
+# --- Right-Click Ability: Shoot Fireball ---
+on right click holding a {@hoe_type}:
+    # Check if the player is holding the correct hoe using the function
+    if isInfernalHarvester(player's tool) is true:
+        # Cooldown Check
+        # Use metadata on the player to track cooldown
+        if metadata value "infernal_harvester_cooldown" of player is not set:
+            # Shoot the fireball
+            shoot a fireball from player at speed {@fireball_speed}
+            # Set cooldown metadata (will expire automatically)
+            set metadata value "infernal_harvester_cooldown" of player to true
+            wait {@fireball_cooldown}
+            delete metadata value "infernal_harvester_cooldown" of player
+        # FIX: Removed 'else: pass' as 'pass' is not valid Skript syntax for doing nothing.
+        # If you want a cooldown message, add it here instead of 'pass'. Example:
+        # else:
+        #     send "&cInfernal Harvester is cooling down!" to player
+
+# --- On Kill Ability: Auto-Pickup Drops ---
+on death:
+    # Check if the attacker exists and is a player
+    if attacker is a player:
+        # Check if the attacker killed the entity using the correct hoe
+        if isInfernalHarvester(attacker's tool) is true:
+            # Check if there are any drops
+            if drops is set:
+                # Loop through all items dropped by the victim
+                loop drops:
+                    # Add the dropped item to the attacker's inventory
+                    # Skript's 'add' command usually handles inventory space,
+                    # dropping items at the player's feet if full.
+                    add loop-value to attacker's inventory
+                # Clear the original drops so they don't fall on the ground
+                clear drops
+
+# --- Command to give the item (Optional) ---
+command /giveharvester:
+    permission: op # Or another permission like harvester.give
+    trigger:
+        # Create the hoe item
+        # FIX: Removed explicit quotes around {@hoe_name}
+        set {_harvester} to {@hoe_type} named {@hoe_name}
+        # Add the identifying lore
+        # FIX: Removed explicit quotes around {@hoe_lore_check}
+        add {@hoe_lore_check} to lore of {_harvester}
+        # Add some descriptive lore (optional)
+        add "" to lore of {_harvester}
+        add "&7Right-click to unleash flames." to lore of {_harvester}
+        # FIX: Corrected 'lore an' to 'lore of'
+        add "&7Kills grant automatic loot." to lore of {_harvester}
+        # Give the item to the player
+        give {_harvester} to player
+        send "&aYou received the &6Infernal Harvester&a!"
+

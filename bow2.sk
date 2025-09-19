@@ -1,0 +1,84 @@
+# Skript for the Phase Bow
+# Ability: Teleports the shooter to the arrow's impact location.
+# Version 5: Simplified failure sound syntax.
+
+options:
+    # --- Configuration ---
+    item_type: bow
+    item_name: "&bPhase Bow"
+    item_lore_check: "&dTeleports on impact"
+
+# --- Helper Function to Check Item ---
+function isPhaseBow(item: item) :: boolean:
+    if type of {_item} is not {@item_type}:
+        return false
+    if uncolored name of {_item} is not uncolored {@item_name}:
+        return false
+    loop lore of {_item}:
+        if loop-value contains {@item_lore_check}:
+            return true
+    return false
+
+# --- Mark Arrows on Shoot ---
+on shoot:
+    if shooter is a player:
+        if isPhaseBow(shooter's tool) is true:
+            set metadata value "phase_arrow_shooter" of projectile to shooter's uuid
+
+# --- Teleport on Arrow Hit ---
+on projectile hit:
+    if projectile is an arrow:
+        if metadata value "phase_arrow_shooter" of projectile is set:
+            set {_shooterUUID} to metadata value "phase_arrow_shooter" of projectile
+            delete metadata value "phase_arrow_shooter" of projectile # Delete metadata first
+
+            # Only proceed if the arrow hit a block
+            if event-block is set:
+                # Loop through players to find the shooter by UUID
+                set {_shooterPlayer} to null
+                loop all players:
+                    if uuid of loop-player is {_shooterUUID}:
+                        set {_shooterPlayer} to loop-player
+                        stop loop
+
+                # Check if the player object was found
+                if {_shooterPlayer} is set:
+                    # Check if the found player is still online
+                    if {_shooterPlayer} is online:
+                        # Get the location of the block the arrow hit
+                        set {_targetBlockLoc} to location of event-block
+                        set {_teleportLoc} to location 1 meter above {_targetBlockLoc}
+                        set {_teleportLocHead} to location 2 meters above {_targetBlockLoc}
+
+                        # Nested air check
+                        if block at {_teleportLoc} is air:
+                            if block at {_teleportLocHead} is air:
+                                # Execute Teleport
+                                play sound "entity.enderman.teleport" at location of {_shooterPlayer} to {_shooterPlayer}
+                                teleport {_shooterPlayer} to {_teleportLoc}
+                                play sound "entity.enderman.teleport" at {_teleportLoc} to {_shooterPlayer}
+                            else:
+                                # Head location is blocked
+                                send "&cCannot phase shift to unsafe location! (Head blocked)" to {_shooterPlayer}
+                                # FIX: Simplified failure sound syntax
+                                play sound "entity.enderman.hurt" at location of {_shooterPlayer} to {_shooterPlayer}
+                        else:
+                            # Feet location is blocked
+                            send "&cCannot phase shift to unsafe location! (Feet blocked)" to {_shooterPlayer}
+                            # FIX: Simplified failure sound syntax
+                            play sound "entity.enderman.hurt" at location of {_shooterPlayer} to {_shooterPlayer}
+
+            # Delete the arrow after processing
+            delete projectile
+
+# --- Command to give the item (Optional) ---
+command /givephasebow:
+    permission: op
+    trigger:
+        set {_item} to {@item_type} named {@item_name}
+        add {@item_lore_check} to lore of {_item}
+        add "" to lore of {_item}
+        add "&7Arrow teleports you on impact." to lore of {_item}
+        give {_item} to player
+        send "&aYou received the &bPhase Bow&a!"
+

@@ -1,0 +1,72 @@
+# Staff Chat Skript - v5 (Object Type Fix)
+
+# Command to send a single message OR toggle chat
+command /sc [<text>]:
+    # Hardcoded permission and message directly in the command definition
+    permission: "staffchat.use"
+    permission message: "&c&l[StaffChat] &r&cYou do not have permission to use staff chat."
+    trigger:
+        # arg-1 holds the value of <text> if provided
+        if arg-1 is set:
+            set {_message} to arg-1
+            # Call function to handle sending
+            sendStaffChatMessage(player, {_message})
+        else:
+            # No message provided, run the toggle command instead
+            execute command "/sctoggle"
+
+# Dedicated command for toggling
+command /sctoggle:
+    aliases: /sct
+    # Hardcoded permission and message directly
+    permission: "staffchat.use"
+    permission message: "&c&l[StaffChat] &r&cYou do not have permission to use staff chat."
+    trigger:
+        set {_uuid} to player's uuid
+        if {sc.toggle::%{_uuid}%} is not set:
+            # Toggle ON
+            set {sc.toggle::%{_uuid}%} to true
+            # Hardcoded toggle ON message
+            send "&c&l[StaffChat] &r&aYour chat is now toggled to Staff Chat."
+        else:
+            # Toggle OFF
+            delete {sc.toggle::%{_uuid}%}
+            # Hardcoded toggle OFF message
+            send "&c&l[StaffChat] &r&cYour chat is now toggled back to public chat."
+
+# Function to send a formatted staff chat message
+# sender = the player sending | msgText = the text content (using object type)
+function sendStaffChatMessage(sender: player, msgText: object): # Parameter type is object
+    set {_senderName} to {_sender}'s display name
+    # Hardcoded format string using variables for sender name and message text
+    set {_fullMessage} to "&c&l[Staff] &e%{_senderName}%&r&7: &f%{msgText}%"
+
+    # Loop through all online players
+    loop all players:
+        # Check if the looped player has the view permission (hardcoded)
+        if loop-player has permission "staffchat.view":
+            # Send the fully formatted message
+            send "%{_fullMessage}%" to loop-player
+
+# Intercept regular chat messages for toggled players
+on chat:
+    set {_uuid} to player's uuid
+    # Check if the player sending the message has staff chat toggled on
+    if {sc.toggle::%{_uuid}%} is set:
+        # Check if they have the use permission (hardcoded)
+        if player has permission "staffchat.use":
+            # Prevent the message from appearing in public chat
+            cancel event
+            # Send the chat message content through the staff chat function
+            sendStaffChatMessage(player, message)
+        else:
+            # Player is toggled ON but lost permission, so toggle OFF and notify
+            delete {sc.toggle::%{_uuid}%}
+            # Hardcoded notification message
+            send "&c&l[StaffChat] &r&cYour staff chat toggle was disabled as you no longer have permission." to player # Notify only the affected player
+
+# Clean up toggle variable if player leaves server
+on quit:
+    delete {sc.toggle::%player's uuid%}
+
+# --- End of Staff Chat Skript ---

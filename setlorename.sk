@@ -1,0 +1,68 @@
+# Skript for Custom Item Names and Lore
+# Author: YourName/Gemini
+# Version: 1.0
+
+# --- Command: /setname ---
+# Description: Sets the display name of the item the player is holding.
+# Usage: /setname <name>
+# Permission: skript.setname (optional - remove or change if needed)
+command /setname <text>:
+  permission: skript.setname
+  permission message: "&cYou don't have permission to use this command."
+  trigger:
+    # Check if the player is holding an item
+    if player's tool is not air:
+      # Set the display name of the held item
+      # The 'colored' expression automatically parses color codes (e.g., &c for red)
+      set display name of player's tool to colored arg-1
+      # Send confirmation message
+      send "&aSuccessfully set the item name to: %colored arg-1%" to player
+    else:
+      # Send error message if no item is held
+      send "&cYou must be holding an item to set its name!" to player
+
+# --- Command: /setlore ---
+# Description: Sets a specific line of lore for the item the player is holding.
+# Usage: /setlore <line number> <lore text>
+# Permission: skript.setlore (optional - remove or change if needed)
+command /setlore <integer> <text>:
+  permission: skript.setlore
+  permission message: "&cYou don't have permission to use this command."
+  trigger:
+    # Check if the player is holding an item
+    if player's tool is not air:
+      # Check if the line number is valid (greater than 0)
+      if arg-1 > 0:
+        # Set the specified lore line
+        # Skript handles adding lines if the index is out of bounds
+        # The 'colored' expression parses color codes
+        set line arg-1 of lore of player's tool to colored arg-2
+        # Send confirmation message
+        send "&aSuccessfully set lore line %arg-1% to: %colored arg-2%" to player
+      else:
+        # Send error message for invalid line number
+        send "&cLine number must be greater than 0." to player
+    else:
+      # Send error message if no item is held
+      send "&cYou must be holding an item to set its lore!" to player
+
+# --- Command: /clearlore ---
+# Description: Clears all lore from the item the player is holding.
+# Usage: /clearlore
+# Permission: skript.clearlore (optional - remove or change if needed)
+command /clearlore:
+    permission: skript.clearlore
+    permission message: "&cYou don't have permission to use this command."
+    trigger:
+        # Check if the player is holding an item
+        if player's tool is not air:
+            # Check if the item actually has lore
+            if lore of player's tool is set:
+                # Clear the lore
+                clear lore of player's tool
+                send "&aSuccessfully cleared the lore from the item." to player
+            else:
+                send "&cThis item doesn't have any lore to clear." to player
+        else:
+            # Send error message if no item is held
+            send "&cYou must be holding an item to clear its lore!" to player

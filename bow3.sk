@@ -1,0 +1,78 @@
+# Skript for the Demolition Axe (Bazooka)
+# Ability: Right-click to shoot an explosive fireball.
+
+options:
+    # --- Configuration ---
+    item_type: stone axe # Changed item type
+    item_name: "&6Demolition Axe" # New name
+    item_lore_check: "&cRight-click to launch!" # New lore
+
+    # Fireball settings
+    fireball_speed: 1.8
+    fireball_yield: 2.5 # Explosion power
+
+    # Cooldown (mandatory)
+    use_cooldown: 3 seconds # Set desired cooldown
+
+# --- Helper Function to Check Item ---
+# Reusable check to see if an item is the custom axe
+function isDemoAxe(item: item) :: boolean:
+    if type of {_item} is not {@item_type}:
+        return false
+    if uncolored name of {_item} is not uncolored {@item_name}:
+        return false
+    loop lore of {_item}:
+        if loop-value contains {@item_lore_check}:
+            return true
+    return false
+
+# --- Right-Click Ability: Launch Fireball ---
+# Changed trigger event to right-click
+on right click holding a {@item_type}:
+    # Check if shooter is a player and is holding the Demolition Axe
+    if player is holding a {@item_type}: # Check the specific type first
+        if isDemoAxe(player's tool) is true:
+            # Cooldown Check (Always active since cooldown > 0)
+            if metadata value "demoaxe_cooldown" of player is set:
+                # Optional: Send cooldown message
+                send "&cDemolition Axe recharging!" to player
+                stop # Stop script execution if on cooldown
+            else:
+                # Set cooldown
+                set metadata value "demoaxe_cooldown" of player to true
+                wait {@use_cooldown}
+                delete metadata value "demoaxe_cooldown" of player
+
+                # Optional: Cancel event if right-clicking the axe has an unwanted default action
+                # cancel event
+
+                # Spawn and shoot the fireball
+                shoot a fireball from player at speed {@fireball_speed}
+                set {_fireball} to last shot fireball
+                if {_fireball} is set:
+                    set explosion yield of {_fireball} to {@fireball_yield}
+                    # Optional: Set the fireball to not cause fire
+                    # set incendiary of {_fireball} to false
+
+                # Play a launch sound (using simplified syntax)
+                play sound "entity.generic.explode" at location of player to player
+
+# --- Cleanup on Quit/Death (Optional but Recommended) ---
+on quit:
+    delete metadata value "demoaxe_cooldown" of event-player
+
+on death of player:
+    if victim is a player:
+        delete metadata value "demoaxe_cooldown" of victim
+
+# --- Command to give the item (Optional) ---
+command /givedemoaxe:
+    permission: op # Or another permission like demoaxe.give
+    trigger:
+        set {_item} to {@item_type} named {@item_name}
+        add {@item_lore_check} to lore of {_item}
+        add "" to lore of {_item}
+        add "&7Right-click to fire explosive." to lore of {_item}
+        give {_item} to player
+        send "&aYou received the &6Demolition Axe&a!"
+

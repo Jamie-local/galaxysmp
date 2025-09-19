@@ -1,0 +1,118 @@
+# Skript for the Temporal Regulator Clock
+# Ability: Right-click to cycle player speed modes (Normal, Fast, Slow).
+# Version 2: Fixed metadata syntax and event references.
+
+options:
+    # --- Configuration ---
+    item_type: clock
+    item_name: "&eTemporal Regulator"
+    item_lore_check: "&6Controls personal time flow"
+
+    # Effect levels
+    haste_level: 1
+    slowness_level: 1
+    resistance_level: 1
+    effect_duration: 5 seconds
+
+    # Cooldown between uses
+    use_cooldown: 1 second
+
+# --- Helper Function to Check Item ---
+function isTemporalRegulator(item: item) :: boolean:
+    if type of {_item} is not {@item_type}:
+        return false
+    if uncolored name of {_item} is not uncolored {@item_name}:
+        return false
+    loop lore of {_item}:
+        if loop-value contains {@item_lore_check}:
+            return true
+    return false
+
+# --- Function to Clear Regulator Effects ---
+function clearRegulatorEffects(p: player):
+    if metadata value "regulator_haste" of {_p} is set:
+        remove haste from {_p}
+        delete metadata value "regulator_haste" of {_p}
+    if metadata value "regulator_slowness" of {_p} is set:
+        remove slowness from {_p}
+        delete metadata value "regulator_slowness" of {_p}
+    if metadata value "regulator_resistance" of {_p} is set:
+        remove resistance from {_p}
+        delete metadata value "regulator_resistance" of {_p}
+
+# --- Right-Click Ability: Cycle Time Mode ---
+on right click holding a {@item_type}:
+    if isTemporalRegulator(player's tool) is true:
+        if metadata value "regulator_cooldown" of player is not set:
+            # FIX: Use simpler metadata key and check if set
+            set {_modeKey} to "regulator_mode_%player's uuid%"
+            if metadata value {_modeKey} of player is not set:
+                set {_currentMode} to 0
+            else:
+                set {_currentMode} to metadata value {_modeKey} of player
+
+            # Cycle to the next mode
+            add 1 to {_currentMode}
+            if {_currentMode} > 2:
+                set {_currentMode} to 0
+
+            # FIX: Store the new mode using the simpler key
+            set metadata value {_modeKey} of player to {_currentMode}
+
+            # Clear previous effects
+            clearRegulatorEffects(player)
+
+            # Apply new effects based on mode
+            if {_currentMode} is 0: # Normal Mode
+                send action bar "&f&lTime Flow: &a&lNORMAL" to player
+                play sound "block.note_block.pling" at player to player
+            else if {_currentMode} is 1: # Fast Mode
+                apply haste {@haste_level} to player for {@effect_duration}
+                set metadata value "regulator_haste" of player to true
+                send action bar "&f&lTime Flow: &e&lACCELERATED" to player
+                play sound "block.note_block.harp" at player to player
+            else if {_currentMode} is 2: # Slow Mode
+                apply slowness {@slowness_level} to player for {@effect_duration}
+                apply resistance {@resistance_level} to player for {@effect_duration}
+                set metadata value "regulator_slowness" of player to true
+                set metadata value "regulator_resistance" of player to true
+                send action bar "&f&lTime Flow: &9&lDECELERATED" to player
+                play sound "block.note_block.bass" at player to player
+
+            # Set cooldown
+            set metadata value "regulator_cooldown" of player to true
+            wait {@use_cooldown}
+            delete metadata value "regulator_cooldown" of player
+
+# --- Cleanup on Quit ---
+on quit:
+    # FIX: Use event-player for clarity
+    set {_player} to event-player
+    clearRegulatorEffects({_player})
+    # FIX: Use simpler metadata key
+    delete metadata value "regulator_mode_%{_player}'s uuid%" of {_player}
+    delete metadata value "regulator_cooldown" of {_player}
+
+# --- Cleanup on Death ---
+on death of player: # 'player' here refers to the type of entity that died
+    # FIX: Use victim instead of player
+    set {_victim} to victim
+    # Ensure the victim was actually a player before clearing effects/metadata
+    if {_victim} is a player:
+        clearRegulatorEffects({_victim})
+        # FIX: Use simpler metadata key
+        delete metadata value "regulator_mode_%{_victim}'s uuid%" of {_victim}
+        delete metadata value "regulator_cooldown" of {_victim}
+
+
+# --- Command to give the item (Optional) ---
+command /giveregulator:
+    permission: op
+    trigger:
+        set {_item} to {@item_type} named {@item_name}
+        add {@item_lore_check} to lore of {_item}
+        add "" to lore of {_item}
+        add "&7Right-click to cycle time flow." to lore of {_item}
+        give {_item} to player
+        send "&aYou received the &eTemporal Regulator&a!"
+

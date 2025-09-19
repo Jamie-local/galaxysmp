@@ -1,0 +1,77 @@
+# ========================================== #
+#    Omega Pick - 3x3x3 Miner (HARDCODED)    #
+#          --- CORRECTED VERSION 3 ---       #
+# ========================================== #
+# This script uses hardcoded values.         #
+# No options or give command included.       #
+# Create the pickaxe manually or via /give.  #
+# ========================================== #
+
+# --- Block Break Handler ---
+on block break:
+    # 1. --- Recursion Guard ---
+    #    Prevents the script triggering itself for blocks broken *by* the script.
+    if {omega_mining::%player's uuid%} is set:
+        stop
+
+    # 2. --- Tool Checks (HARDCODED VALUES) ---
+    #    Check if the player is holding a tool
+    if player's tool is not set:
+        stop
+    #    Check if the tool is the correct type (Hardcoded: netherite_pickaxe)
+    if player's tool is netherite_pickaxe:
+        #    Check if the tool has the correct name (Hardcoded: "&dOmega Pick")
+        if name of player's tool is "&dOmega Pick":
+
+            # --- Set Recursion Flag ---
+            #    Mark that this player is currently mining with the Omega Pick
+            set {omega_mining::%player's uuid%} to true
+
+            # Store the location of the initially broken block and the tool used
+            set {_center_loc} to location of event-block
+            set {_tool_used} to player's tool # Store tool for break effect
+
+            # --- Loop through the 3x3x3 Cube ---
+            loop integers from -1 to 1: # Outermost loop (Level 1) for X offset
+                set {_x_offset} to loop-value-1
+
+                loop integers from -1 to 1: # Middle loop (Level 2) for Y offset
+                    set {_y_offset} to loop-value-2
+
+                    loop integers from -1 to 1: # Innermost loop (Level 3) for Z offset
+                        set {_z_offset} to loop-value-3
+
+                        # Calculate the location within the 3x3x3 cube using vectors
+                        set {_offset_vector} to vector({_x_offset}, {_y_offset}, {_z_offset})
+                        set {_target_loc} to {_center_loc} ~ {_offset_vector} # Adds the offset vector to center location
+
+                        set {_target_block} to block at {_target_loc}
+
+                        # Check if the target block is valid to break
+                        # Use != to check if it's not the original block
+                        if {_target_block} != event-block:
+                            # Check if it's not air
+                            if {_target_block} is not air:
+
+                                # Check against common unbreakable blocks
+                                set {_block_type} to type of {_target_block}
+                                # Define list using parentheses (CORRECTED)
+                                set {_unbreakable::*} to (bedrock, command_block, chain_command_block, repeating_command_block, barrier, structure_block, structure_void, jigsaw, reinforced_deepslate, end_portal_frame, end_gateway, light) # Add others if needed
+
+                                # Check if the block type is NOT in the unbreakable list
+                                if {_block_type} is not element of {_unbreakable::*}:
+
+                                    # Break the block, simulating player break with tool enchantments
+                                    break {_target_block} naturally using {_tool_used}
+
+            # --- Clear Recursion Flag ---
+            #    IMPORTANT: Remove the flag once all blocks are processed
+            delete {omega_mining::%player's uuid%}
+
+# --- Safety Cleanup ---
+# Delete the flag if the player quits while the flag is somehow still active
+on quit:
+    if {omega_mining::%player's uuid%} is set: # Check if it exists first
+        delete {omega_mining::%player's uuid%}
+
+# --- End of Script ---

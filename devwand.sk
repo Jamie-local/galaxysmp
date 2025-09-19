@@ -1,0 +1,109 @@
+# Skript for the Builder's Wand
+# Ability: Sneak + Right-click to place the same block type adjacent to the clicked face, consuming one from inventory.
+# Version 4: Changed face detection logic to use player position relative to block center.
+
+options:
+    # --- Configuration ---
+    item_type: blaze rod
+    item_name: "&eBuilder's Wand"
+    item_lore_check: "&7Extends structures"
+
+    # Optional cooldown to prevent accidental rapid placement
+    use_cooldown: 0.2 seconds # Very short cooldown, adjust if needed (0 = none)
+
+# --- Helper Function to Check Item ---
+function isBuilderWand(item: item) :: boolean:
+    if type of {_item} is not {@item_type}:
+        return false
+    if uncolored name of {_item} is not uncolored {@item_name}:
+        return false
+    loop lore of {_item}:
+        if loop-value contains {@item_lore_check}:
+            return true
+    return false
+
+# --- Sneak + Right-Click Ability: Extend Block ---
+on right click:
+    # Check if a block was clicked
+    if clicked block is set:
+        # Check if player is sneaking
+        if player is sneaking:
+            # Check if player is holding the wand
+            if isBuilderWand(player's tool) is true:
+                # Cooldown Check
+                if {@use_cooldown} > 0:
+                    if metadata value "builderwand_cooldown" of player is set:
+                        stop # Stop if on cooldown
+                    else:
+                        set metadata value "builderwand_cooldown" of player to true
+                        wait {@use_cooldown}
+                        delete metadata value "builderwand_cooldown" of player
+
+                # Get the type of block clicked
+                set {_blockType} to type of clicked block
+                # Check if the player has at least one of that block type in their inventory
+                if player has 1 of {_blockType}:
+                    # --- Calculate Target Location ---
+                    set {_sourceLoc} to location of clicked block
+                    # FIX: Calculate clicked face based on player position relative to block center
+                    set {_blockCenterX} to x-coordinate of {_sourceLoc} + 0.5
+                    set {_blockCenterY} to y-coordinate of {_sourceLoc} + 0.5
+                    set {_blockCenterZ} to z-coordinate of {_sourceLoc} + 0.5
+
+                    set {_playerLoc} to player's location
+                    set {_dx} to x-coordinate of {_playerLoc} - {_blockCenterX}
+                    set {_dy} to (y-coordinate of {_playerLoc} + 1.5) - {_blockCenterY} # Compare player eye level approx.
+                    set {_dz} to z-coordinate of {_playerLoc} - {_blockCenterZ}
+
+                    set {_absDx} to abs({_dx})
+                    set {_absDy} to abs({_dy})
+                    set {_absDz} to abs({_dz})
+
+                    set {_targetLoc} to {_sourceLoc} # Initialize target location
+                    # Determine dominant axis of difference
+                    if {_absDx} > {_absDy} and {_absDx} > {_absDz}: # X is dominant
+                        if {_dx} > 0: # Player is East of block center
+                            set {_targetLoc} to location 1 meter east of {_sourceLoc}
+                        else: # Player is West of block center
+                            set {_targetLoc} to location 1 meter west of {_sourceLoc}
+                    else if {_absDy} > {_absDx} and {_absDy} > {_absDz}: # Y is dominant
+                        if {_dy} > 0: # Player is Above block center
+                            set {_targetLoc} to location 1 meter above {_sourceLoc}
+                        else: # Player is Below block center
+                            set {_targetLoc} to location 1 meter below {_sourceLoc}
+                    else: # Z is dominant (or tied, default to Z)
+                        if {_dz} > 0: # Player is South of block center
+                            set {_targetLoc} to location 1 meter south of {_sourceLoc}
+                        else: # Player is North of block center
+                            set {_targetLoc} to location 1 meter north of {_sourceLoc}
+
+                    # --- Safety Check ---
+                    if block at {_targetLoc} is air:
+                        # --- Execute Placement ---
+                        remove 1 of {_blockType} from player's inventory
+                        set block at {_targetLoc} to {_blockType}
+                        play sound "block.stone.place" at {_targetLoc} to player
+                        cancel event # Prevent default right-click action
+                    # else: # Target location is not air
+
+                # else: # Player doesn't have the required block
+
+# --- Cleanup on Quit/Death (Optional) ---
+on quit:
+    delete metadata value "builderwand_cooldown" of event-player
+
+on death of player:
+    if victim is a player:
+        delete metadata value "builderwand_cooldown" of victim
+
+# --- Command to give the item (Optional) ---
+command /givebuilderwand:
+    permission: op
+    trigger:
+        set {_item} to {@item_type} named {@item_name}
+        add {@item_lore_check} to lore of {_item}
+        add "" to lore of {_item}
+        add "&7Sneak + Right-Click to extend." to lore of {_item}
+        give {_item} to player
+        send "&aYou received the &eBuilder's Wand&a!"
+

@@ -1,0 +1,91 @@
+# Skript for the Shadow Walker Boots
+# Ability: Short-range teleport forward when starting to sneak.
+# Version 7: Removed particle effects due to compatibility issues.
+
+options:
+    # --- Configuration ---
+    boot_type: netherite boots
+    boot_name: "&5Shadow Walkers"
+    boot_lore_check: "&dPhase Shift Ready"
+    teleport_distance: 6
+    teleport_cooldown: 1.5 seconds
+
+# --- Helper Function to Check Item ---
+function isWearingShadowWalkers(p: player) :: boolean:
+    if {_p}'s boots is not set:
+        return false
+    if type of {_p}'s boots is not {@boot_type}:
+        return false
+    if uncolored name of {_p}'s boots is not uncolored {@boot_name}:
+        return false
+    loop lore of {_p}'s boots:
+        if loop-value contains {@boot_lore_check}:
+            return true
+    return false
+
+# --- Sneak Ability: Teleport Forward ---
+on sneak toggle:
+    if player is sneaking:
+        if isWearingShadowWalkers(player) is true:
+            if metadata value "shadow_walker_cooldown" of player is not set:
+                # --- Calculate Target Location (Simplified Axis-Aligned) ---
+                set {_startLoc} to location of player
+                set {_yaw} to yaw of player
+
+                # Normalize yaw to be between 0 and 360
+                while {_yaw} < 0:
+                    add 360 to {_yaw}
+                while {_yaw} >= 360:
+                    subtract 360 from {_yaw}
+
+                # Determine cardinal direction and calculate target location
+                # South: -45 (315) to 45
+                if {_yaw} > 315 or {_yaw} <= 45:
+                    set {_targetLoc} to location {@teleport_distance} blocks south of {_startLoc}
+                # West: 45 to 135
+                else if {_yaw} > 45 and {_yaw} <= 135:
+                    set {_targetLoc} to location {@teleport_distance} blocks west of {_startLoc}
+                # North: 135 to 225
+                else if {_yaw} > 135 and {_yaw} <= 225:
+                    set {_targetLoc} to location {@teleport_distance} blocks north of {_startLoc}
+                # East: 225 to 315
+                else if {_yaw} > 225 and {_yaw} <= 315:
+                    set {_targetLoc} to location {@teleport_distance} blocks east of {_startLoc}
+                else:
+                    stop # Should not happen
+
+                # --- Safety Check ---
+                set {_targetBlockLocFeet} to {_targetLoc}
+                set {_targetBlockLocHead} to location 1 meter above {_targetLoc}
+
+                # First check the feet location
+                if block at {_targetBlockLocFeet} is air:
+                    # If feet location is clear, check the head location
+                    if block at {_targetBlockLocHead} is air:
+                        # --- Execute Teleport (Only if both checks pass) ---
+                        # Play sound before teleport
+                        play sound "entity.enderman.teleport" at {_startLoc} to player
+                        # FIX: Removed particle effect line
+
+                        teleport player to {_targetLoc}
+
+                        # Play sound after teleport
+                        play sound "entity.enderman.teleport" at {_targetLoc} to player
+                        # FIX: Removed particle effect line
+
+                        # Set cooldown metadata
+                        set metadata value "shadow_walker_cooldown" of player to true
+                        wait {@teleport_cooldown}
+                        delete metadata value "shadow_walker_cooldown" of player
+
+# --- Command to give the item (Optional) ---
+command /giveshadowboots:
+    permission: op
+    trigger:
+        set {_boots} to {@boot_type} named {@boot_name}
+        add {@boot_lore_check} to lore of {_boots}
+        add "" to lore of {_boots}
+        add "&7Sneak to phase shift forward." to lore of {_boots}
+        give {_boots} to player
+        send "&aYou received the &5Shadow Walkers&a!"
+

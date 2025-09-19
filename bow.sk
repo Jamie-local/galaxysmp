@@ -1,0 +1,62 @@
+
+# Recky Bow Skript V5
+
+
+on shoot:
+    # Ensure the shooter is a player and the projectile is an arrow
+    shooter is a player
+    projectile is an arrow
+
+    # Check if the player is holding the specific bow
+    # Using uncolored name comparison is generally more robust
+    if uncolored name of shooter's tool contains "Recky Bow":
+        # Check if any lore line contains the required text
+        set {_loreMatchFound} to false # Initialize variable
+        loop lore of shooter's tool: # Iterate through the lore list
+            if loop-value contains "&7&kbow": # Keep color codes here if they are essential identifiers
+                set {_loreMatchFound} to true
+                stop loop # Exit lore loop once found
+
+        # Proceed only if the lore matches
+        if {_loreMatchFound} is true:
+            # Cancel the original arrow shot
+            cancel event
+
+            # --- Multi-Shot Effect ---
+
+            # Get the velocity of the arrow that *would* have been shot
+            # This includes direction and speed based on bow draw
+            set {_originalVel} to velocity of projectile
+
+            # Check if the velocity is valid (not zero vector)
+            if length of {_originalVel} is 0:
+                stop # Don't proceed if the original velocity is zero
+
+            # Number of arrows to shoot
+            set {_arrowCount} to 5
+
+            # Loop to spawn multiple arrows
+            loop {_arrowCount} times:
+                # --- Spawn Arrow ---
+                # Spawn a new arrow at the shooter's eye level
+                spawn an arrow at shooter's eye location
+                set {_proj} to last spawned entity
+
+                # Apply the original calculated velocity to the spawned arrow
+                # All arrows will have the same direction and speed
+                set velocity of {_proj} to {_originalVel}
+
+                # Optional: Add metadata to identify these arrows if needed later
+                # set metadata value "custom_recky_arrow" of {_proj} to true
+
+    # Reset temporary variable outside the checks (ensure it's deleted even if lore doesn't match)
+    delete {_loreMatchFound}
+
+
+
+
+
+
+
+    
+

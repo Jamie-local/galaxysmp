@@ -1,0 +1,90 @@
+# ========================================== #
+#    Hardcoded Harvester Spawn Tool Script   #
+#    (Tool is consumed on use)             #
+# ========================================== #
+# This script requires NO options defined.   #
+# All values are hardcoded below.            #
+# ========================================== #
+
+# --- Event Handler ---
+# Trigger: Player right-clicks with a wooden shovel
+on right click with wooden shovel:
+
+    # 1. Check if the player is holding the SPECIFIC named tool
+    if name of player's tool is "&8The Harvester Spawn Tool":
+
+        # 2. Prevent the shovel's default action (like making a path)
+        cancel event
+
+        # 3. Determine where to spawn the boss
+        #    (Prefers spawning on top of the clicked block, falls back to player location)
+        if clicked block is set:
+            set {_spawn_loc} to location of clicked block
+            add 1 to y-coordinate of {_spawn_loc} # Spawn 1 block above the clicked surface
+        else:
+            set {_spawn_loc} to location of player # Fallback if clicking air
+
+        # --- Initiate Summoning & Remove Tool ---
+        send "&aSummoning The Harvester..." to player # Feedback to the player using the tool
+
+       
+        remove 1 of wooden shovel named "&8The Harvester Spawn Tool" from player's inventory
+
+        # --- Spawn and Configure "The Harvester" ---
+        #    (Using hardcoded values based on your command)
+        spawn 1 zombie at {_spawn_loc}     # Hardcoded Entity Type: Skeleton
+        set {_boss} to last spawned entity # Store the boss entity
+
+        # Set Name
+        set name of {_boss} to "&2The Harvester" # Hardcoded Name
+
+        # Set Health
+        set max health of {_boss} to 55          # Hardcoded Max Health
+        set health of {_boss} to 55              # Heal to max health
+
+
+        apply potion of strength 3 to {_boss} for 999 days 
+
+        # Equip Armor and Weapon
+        equip {_boss} with diamond helmet
+        equip {_boss} with diamond chestplate
+        equip {_boss} with diamond leggings
+        equip {_boss} with diamond boots
+        equip {_boss} with diamond sword
+
+        # --- Delayed Minion Spawning ---
+        #    (Using hardcoded values based on your command)
+
+        wait 20 seconds # Hardcoded Delay
+
+        # Check if the boss is still alive before spawning minions
+        if {_boss} is alive:
+            broadcast "&6The Harvester Is Summoning His Minions!" # Announcement
+
+            set {_boss_loc} to location of {_boss} # Get current location in case it moved
+
+            # Removed the nearby player message from example for simplification as requested
+
+            broadcast "&cReinforcements have arrived for &2The Harvester&c!" # Announcement
+
+            # Spawn Minions Loop
+            loop 5 times: # Hardcoded Minion Count
+                spawn zombie at {_boss_loc} # Hardcoded Minion Type
+                set {_minion} to last spawned entity
+
+                # Equip Minions
+                equip {_minion} with leather helmet
+                equip {_minion} with leather chestplate
+                equip {_minion} with leather leggings
+                equip {_minion} with leather boots
+                equip {_minion} with stone axe
+
+                # Configure Minions
+                set name of {_minion} to "&eZombie Minion" # Hardcoded Minion Name
+                set max health of {_minion} to 15          # Hardcoded Minion Max Health
+                set health of {_minion} to 15              # Heal minion to max health
+
+        # else: (Optional) Code here would run if boss died during the 20 sec wait
+            # broadcast "&2The Harvester&c fell before its minions arrived."
+
+# --- End of Script ---

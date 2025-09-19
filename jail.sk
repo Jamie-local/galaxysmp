@@ -1,0 +1,126 @@
+# Jail Skript
+# Creates /jail <player> command
+# Jail location is set directly in this file.
+
+# --- Configuration ---
+# SET YOUR JAIL COORDINATES AND WORLD NAME HERE:
+# These are GLOBAL script variables, accessible anywhere in this script file.
+# We are temporarily NOT using these in the location() call below for testing.
+variables:
+    {jail_world} = "world"  # Replace "world" with the exact name of your jail world
+    {jail_x} = 55526.0      # Replace with the X coordinate (use .0 for numbers)
+    {jail_y} = -3.0         # Replace with the Y coordinate (use .0 for numbers)
+    {jail_z} = 55583.0      # Replace with the Z coordinate (use .0 for numbers)
+    # Optional: Set yaw and pitch if needed
+    # {jail_yaw} = 0.0
+    # {jail_pitch} = 0.0
+
+# --- Command: /jail <player> ---
+# Jails the specified player.
+command /jail <player>:
+    description: Jails a player, sending them to the pre-defined jail location and spectating them.
+    permission: skript.jail.use
+    permission message: &cYou don't have permission to use the jail command.
+    usage: /jail <player>
+    trigger:
+        # --- Debug: Check if executor is player ---
+        if player is not set:
+            # Correct way to send message to console
+            send "&c[Jail Debug] Command run by console, cannot proceed with spectator/teleport self." to console
+            send "&c[Jail Debug] Console cannot use this version of /jail." to console
+            stop
+        # else: # Optional: Send debug message if executor is a player
+            # send "&e[Jail Debug] Command run by player: %player%" to player
+
+        # --- Define Jail Location & Debug ---
+        # Check if the target world exists first
+        # Ensure the world name here MATCHES your intended world name
+        if world("world") is not set: # Temporarily hardcoding world name for testing
+            send "&cError: The jail world named 'world' does not seem to exist or isn't loaded. Check the script configuration and this line." to player
+            stop
+        # else: # Optional: Confirm world exists
+            # send "&e[Jail Debug] World 'world' found." to player
+
+        # --- TESTING: Construct the location object using HARDCODED values ---
+        # Make sure these numbers and the world name are EXACTLY what you want.
+        set {_jail_loc} to location(55526.0, -3.0, 55583.0, "world")
+        # If you defined yaw/pitch, use:
+        # set {_jail_loc} to location(55526.0, -3.0, 55583.0, "world", 0.0, 0.0)
+
+        # --- DEBUGGING: Show the location being used ---
+        send "&e[Jail Debug] Target Location (Hardcoded): %{_jail_loc}%" to player # Send to executor
+
+        # --- Pre-Checks ---
+        # Define the target player from the argument (this is a temporary local variable)
+        set {_target} to arg-1
+
+        # Check if the target player is online
+        if {_target} is not online:
+            send "&cPlayer %{_target}% is not online." to player
+            stop
+
+        # Prevent jailing yourself
+        if {_target} is player:
+            send "&cYou cannot jail yourself." to player
+            stop
+
+        # --- DEBUGGING: Confirm target ---
+        send "&e[Jail Debug] Attempting to jail target: %{_target}%" to player
+
+        # --- Jailing Actions ---
+        # 1. Teleport the target player to the jail location
+        send "&e[Jail Debug] Executing teleport..." to player
+        teleport {_target} to {_jail_loc}
+
+        # --- DEBUGGING: Check location after teleport attempt ---
+        wait 2 ticks # Give teleport a moment
+        set {_current_loc} to location of {_target}
+        send "&e[Jail Debug] Target %{_target}% is now at: %{_current_loc}%" to player
+        # Check if locations differ (basic check)
+        if {_current_loc} is not {_jail_loc}:
+            # Correct indentation for the line below (12 spaces)
+            send "&e[Jail Debug] Teleport might have failed or player moved. Target location differs from jail location." to player
+
+        # Send message to target
+        send "&cYou have been jailed!" to {_target}
+
+        # --- Admin Actions ---
+        # 2. Set the command runner's gamemode to spectator
+        send "&e[Jail Debug] Setting gamemode to spectator..." to player
+        set gamemode of player to spectator
+        # 3. Teleport the command runner to the jailed player
+        send "&e[Jail Debug] Teleporting self to target..." to player
+        teleport player to {_target} # Teleporting to the player entity, not the jail location directly
+
+        # --- Feedback ---
+        send "&6You have jailed %{_target}% and are now spectating." to player
+
+
+# --- Command: /unjail <player> ---
+# Optional: Command to release someone from jail (basic example)
+command /unjail <player>:
+    description: Releases a player from jail (teleports to spawn, sets survival).
+    permission: skript.jail.use # Consider a separate permission like skript.jail.unjail
+    permission message: &cYou don't have permission to use the unjail command.
+    usage: /unjail <player>
+    trigger:
+        # Define the target player (local variable)
+        set {_target} to arg-1
+
+        if {_target} is not online:
+            send "&cPlayer %{_target}% is not online." to player # Send feedback to player
+            stop
+
+        # Basic teleport to world spawn and set gamemode
+        teleport {_target} to spawn location of world of {_target}
+        set gamemode of {_target} to survival # Or adventure, or restore previous
+        send "&aYou have been released from jail." to {_target}
+
+        # Send feedback to the command executor
+        if player is set: # Check if command runner is a player before sending message
+            # Correct indentation (12 spaces)
+            send "&6You released %{_target}% from jail." to player
+        else: # Send to console if run by console
+            # Correct indentation (12 spaces)
+            send "&6Released %{_target}% from jail." to console
+

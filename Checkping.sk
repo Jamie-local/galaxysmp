@@ -1,0 +1,63 @@
+#===================================#
+#		Created by Theindo448		#
+#		Version: 1.0 (Legacy)		#
+#		  Skript: CheckPing			#
+#===================================#
+
+
+options:
+
+	prefix: &8[&ePing&8]
+	version: 1.0 (Legacy)
+	permissionbypass: checkping.admin
+	line: &e> &8&m-------------------------
+	filename: Checkping
+
+command /ping [<player>]:
+	trigger:
+		if arg 1 is not set:
+			send "{@prefix} &eYour Ping &7» &e%player's ping% ms"
+			stop trigger
+		if arg 1 is set:
+			send "{@prefix} &e%arg-1%'s Ping &7» &e%arg-1's ping% ms"
+			stop trigger
+
+command /pings [<text>]:
+	permission: {@permissionbypass}
+	permission message: &cYou don't have permission for that!
+	trigger:
+		if arg 1 is "help":
+			send "{@line}"
+			send "{@prefix} Version: {@version} &8(&7Author: Theindo448&8)"
+			send " "
+			send "&aCommands :"
+			send " "
+			send "&a/pings help &e- &7show the list commands"
+			send "&a/pings reload &e- &7reload the skript"
+			send "&a/pings serverinfo &e- &7Check the Server Information"
+			send "{@line}"
+			stop trigger
+		if arg 1 is not set:
+			send "{@line}"
+			send "{@prefix} Version: {@version} &8(&7Author: Theindo448&8)"
+			send " "
+			send "&aCommands :"
+			send " "
+			send "&a/pings help &e- &7show the list commands"
+			send "&a/pings reload &e- &7reload the skript"
+			send "&a/pings serverinfo &e- &7Check the Server Information"
+			send "{@line}"
+			stop trigger
+		if arg 1 is "reload":
+			reload skript "{@filename}"
+			wait 2 ticks
+			send "{@prefix} &aThe skript has been reloaded!"
+			stop trigger
+		if arg 1 is "serverinfo":
+			send "{@line}"
+			send "{@prefix} &eServer Information"
+			send ""
+			send "Running on server version %bukkit version%"
+			send ""
+			send "{@line}"
+			stop trigger
